@@ -1,0 +1,72 @@
+﻿<#+
+
+private void GenerateSelectStoredProcedures(Server server, String outputDirectory)
+{
+  foreach (var database in server.Databases.RelevantDatabases)
+  {
+    foreach (var table in database.Tables)
+    {
+      var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select");
+
+#>
+USE [<#= database.Name #>];
+GO
+
+IF OBJECT_ID(N'<#= spName #>') IS NOT NULL
+  DROP PROCEDURE <#= spName #>; 
+GO
+
+SET NUMERIC_ROUNDABORT OFF;
+SET ANSI_NULLS, ANSI_PADDING, ANSI_WARNINGS, ARITHABORT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER, XACT_ABORT ON;
+GO
+
+CREATE PROCEDURE <#= spName #>
+  (
+    <#= String.Join("," + Environment.NewLine + "    ", table.Columns.GetStoredProcedureParameters(ColumnType.PrimaryKey)) #>
+  )
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  DECLARE @crlf NCHAR(2) = CHAR(13) + CHAR(10);
+  DECLARE @proc_name SYSNAME = COALESCE(OBJECT_NAME(@@PROCID), 'Insufficient permissions to get stored procedure name.');
+  DECLARE @error INT;
+  DECLARE @error_message NVARCHAR(MAX);
+
+  SELECT
+      <#= String.Join("," + Environment.NewLine + "      ", table.Columns.GetSelectColumnList("T")) #>
+    FROM
+      <#= table.SchemaNameAndTableName #> AS T
+    WHERE
+      <#= String.Join(Environment.NewLine + "      AND ", table.Columns.GetWhereClauseColumnList(ColumnType.PrimaryKey, "T")) #>;
+
+  SELECT @error = @@ERROR;
+
+  IF @error <> 0
+  BEGIN
+    DECLARE @parameter_values NVARCHAR(MAX) =
+      <#= String.Join(" + @crlf + " + Environment.NewLine + "      ",
+            table
+              .Columns
+              .Select(column => String.Format("'{0} = ' + {1}", column.SqlIdentifier, column.SqlExpressionToConvertToString)))  #>;
+    SET @error_message =
+      @proc_name + ': Error ' + CONVERT(NVARCHAR(MAX), @error) + ' occurred when calling SELECT FROM <#= table.SchemaNameAndTableName #>.' + @crlf +
+      'Parameter values:' + @crlf + @parameter_values;
+    RAISERROR(@error_message, 16, 1);
+    RETURN 1;
+  END;
+
+  SET NOCOUNT OFF;
+
+  RETURN 0;
+END;
+
+GO
+<#+
+
+      this.SaveOutput(Path.Combine(outputDirectory, spName + ".sql"));
+    } // foreach table
+  } // foreach database
+}
+
+#>

@@ -1,0 +1,149 @@
+﻿<#+
+
+private void GenerateDataAccessClasses(Server server, String outputDirectory)
+{
+  foreach (var database in server.Databases.RelevantDatabases.OrderBy(db => db.Name))
+  {
+    var outputFilename = database.GetTargetLanguageIdentifier(database.Name) + ".DataLayer";
+  
+#>
+Imports System
+Imports System.Collections.Generic
+Imports System.Configuration
+Imports System.Data
+Imports System.Data.SqlClient
+
+Imports <#= database.GetTargetLanguageIdentifier(database.Name) + ".Entities" #>
+
+Imports Utilities.Sql
+
+Namespace <#= outputFilename #>
+<#+
+
+    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    {
+      
+#>
+  Public Class <#= table.TargetLanguageTableIdentifier #>Methods
+    Private Shared _connectionString = ConfigurationManager.ConnectionStrings("<#= database.GetTargetLanguageIdentifier(database.Name) #>").ConnectionString
+
+<#+
+      var arguments = table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No);
+      if (arguments.Count == 0)
+      {
+#>
+    Public Shared Function Select<#= table.TargetLanguageTableIdentifier #>() As List(Of <#= table.TargetLanguageTableIdentifier #>)
+<#+
+      }
+      else
+      {
+#>
+    Public Shared Function Select<#= table.TargetLanguageTableIdentifier #> _
+      (
+        <#= String.Join("," + Environment.NewLine + "        ", arguments) #>
+      ) As List(Of <#= table.TargetLanguageTableIdentifier #>)
+<#+
+      }
+#>
+      Dim result As New List(Of <#= table.TargetLanguageTableIdentifier #>)()
+      
+      Using connection As New SqlConnection(_connectionString)
+        connection.Open()
+
+        Using command As New SqlCommand() With { .Connection = connection, .CommandType = CommandType.StoredProcedure, .CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select") #>" }
+          command.Parameters.Clear()
+<#+
+      var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No);
+      if (parameters.Count > 0)
+      {
+#>
+          command.Parameters.Add(<#= String.Join(")" + Environment.NewLine + "          command.Parameters.Add(", parameters) #>)
+<#+
+      }
+#>
+
+          Using reader = command.ExecuteReader(CommandBehavior.CloseConnection)
+            While reader.Read()
+              result.Add(
+                New <#= table.TargetLanguageTableIdentifier #>() With
+                {
+                  <#= String.Join("," + Environment.NewLine + "                  ",
+                        table.Columns.OrderBy(column => column.Name)
+                        .Select(column => String.Format(".{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))) #>
+                })
+            End While
+          End Using
+
+          Return result
+        End Using
+      End Using
+    End Function
+
+<#+
+
+      /* Views don't need insert, update and delete methods. */
+      if (!table.IsView)
+      {
+      
+#>
+    Public Shared Sub Insert<#= table.TargetLanguageTableIdentifier #> _
+      (
+        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInInsertStatement, IncludeKeyIdentificationComment.No)) #>
+      )
+      Using connection As New SqlConnection(_connectionString)
+        connection.Open()
+
+        Using command As New SqlCommand() With { .Connection = connection, .CommandType = CommandType.StoredProcedure, .CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Insert") #>" }
+          command.Parameters.Clear()
+          command.Parameters.Add(<#= String.Join(")" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInInsertStatement, IncludeKeyIdentificationComment.No)) #>)
+          command.ExecuteNonQuery()
+        End Using
+      End Using
+    End Sub
+
+    Public Shared Sub Update<#= table.TargetLanguageTableIdentifier #> _
+      (
+        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInUpdateSetClause, IncludeKeyIdentificationComment.No)) #>
+      )
+      Using connection As New SqlConnection(_connectionString)
+        connection.Open()
+
+        Using command As New SqlCommand() With { .Connection = connection, .CommandType = CommandType.StoredProcedure, .CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Update") #>" }
+          command.Parameters.Clear()
+          command.Parameters.Add(<#= String.Join(")" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInUpdateSetClause, IncludeKeyIdentificationComment.No)) #>)
+          command.ExecuteNonQuery()
+        End Using
+      End Using
+    End Sub
+
+    Public Shared Sub Delete<#= table.TargetLanguageTableIdentifier #> _
+      (
+        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No)) #>
+      )
+      Using connection As New SqlConnection(_connectionString)
+        connection.Open()
+
+        Using command As New SqlCommand() With { .Connection = connection, .CommandType = CommandType.StoredProcedure, .CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Delete") #>" }
+          command.Parameters.Clear()
+          command.Parameters.Add(<#= String.Join(")" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No)) #>)
+          command.ExecuteNonQuery()
+        End Using
+      End Using
+    End Sub
+  
+<#+
+      } // if
+#> 
+  End Class
+  
+<#+
+    } // foreach table
+#> 
+End Namespace
+
+<#+
+
+    this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".vb"));
+  } // foreach database
+}
+#>

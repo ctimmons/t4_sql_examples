@@ -1,0 +1,69 @@
+﻿<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ output extension=".txt" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="C:\Data\Dev\Visual Studio\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Data.SqlClient" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="Utilities.Sql" #>
+<#@ include file="..\T4_Utilities\SQL Generator Utilities.ttinclude" #>
+<#@ include file="Entity Classes.ttinclude" #>
+<#@ include file="Data Access Classes.ttinclude" #>
+<#
+
+using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=AdventureWorks2012;Integrated Security=true;"))
+{
+  connection.Open();
+
+  var configuration =
+    new Utilities.Sql.Configuration()
+    {
+      Connection = connection,
+      XmlSystem = XmlSystem.Linq_XDocument,
+      TargetLanguage = TargetLanguage.FSharp,
+      IsTargetLanguageCaseSensitive = IsTargetLanguageCaseSensitive.Yes
+    };
+
+  /* NOTE: Because Visual Studio F# projects don't support T4 templates,
+           the standalone TextTransform.exe utility has to be used to
+           process this template (it's called in the project's Pre-Build step).
+
+           The problem is that this.Host.ResolvePath() doesn't seem to work
+           in TextTransform.exe.  ResolvePath() just returns its argument, without including any
+           directory data.
+           
+           System.Environment.CurrentDirectory cannot be depended on, either.
+           Sometimes it returns the project's directory, and sometimes it returns the
+           project's bin/debug or bin/release directory.  I'm guessing Visual Studio is
+           altering the operating system's current directory to suit its own needs.
+
+           So it looks like there's no other choice but to hardcode the
+           outputDirectory value. */
+
+  var outputDirectory = @"C:\Data\Dev\Visual Studio\T4\SQL_T4_Examples\FSharp";
+  var server = new Server(configuration);
+
+  /* In these templates, to prevent code generation for a particular database,
+     add its name to the list of ignored database names.
+
+     Note that the Server.Databases.IgnoredDatabaseNames property only affects
+     what's returned by the Server.Databases.RelevantDatabases property.
+     
+     By default, the IgnoredDatabaseNames includes "master", "model", "msdb",
+     "tempdb", "reportserver", and "reportservertempdb".
+
+     Also note that the IgnoredDatabaseNames and RelevantDatabases properties don't have any
+     effect if your code enumerates the databases directly (e.g. foreach (var db in server.Databases)),
+     or accesses an individual database directly (e.g. server.Databases["utilities"]). */
+  
+  //server.Databases.IgnoredDatabaseNames.Add("AdventureWorks2012");
+
+  this.GenerateEntityClasses(server, outputDirectory);
+  this.GenerateDataAccessClasses(server, outputDirectory);
+}
+
+#>

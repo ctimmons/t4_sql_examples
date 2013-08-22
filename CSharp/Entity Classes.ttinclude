@@ -1,0 +1,33 @@
+﻿<#+
+
+private void GenerateEntityClasses(Server server, String outputDirectory)
+{
+  foreach (var database in server.Databases.RelevantDatabases.OrderBy(db => db.Name))
+  {
+    var outputFilename = database.GetTargetLanguageIdentifier(database.Name) + ".Entities";
+
+#>
+namespace <#= outputFilename #>
+{
+<#+
+
+    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    {
+
+#>
+  public class <#= table.TargetLanguageTableIdentifier #>
+  {
+    <#= String.Join(" { get; set; }" + Environment.NewLine + "    ", table.Columns.GetClassPropertyDeclarations("public")) #> { get; set; }
+  }
+  
+<#+
+    } // foreach table
+#> 
+}
+
+<#+
+
+    this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".cs"));
+  } // foreach database
+}
+#>

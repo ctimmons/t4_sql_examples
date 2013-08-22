@@ -1,0 +1,82 @@
+﻿<#+
+
+private void GenerateDeleteStoredProcedures(Server server, String outputDirectory)
+{
+  foreach (var database in server.Databases.RelevantDatabases)
+  {
+    foreach (var table in database.Tables)
+    {
+      var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Delete");
+
+#>
+USE [<#= database.Name #>];
+GO
+
+IF OBJECT_ID(N'<#= spName #>') IS NOT NULL
+  DROP PROCEDURE <#= spName #>; 
+GO
+
+SET NUMERIC_ROUNDABORT OFF;
+SET ANSI_NULLS, ANSI_PADDING, ANSI_WARNINGS, ARITHABORT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER, XACT_ABORT ON;
+GO
+
+CREATE PROCEDURE <#= spName #>
+  (
+    <#= String.Join("," + Environment.NewLine + "    ", table.Columns.GetStoredProcedureParameters(ColumnType.PrimaryKey)) #>
+  )
+AS
+BEGIN
+  SET NOCOUNT ON;
+
+  DECLARE @crlf NCHAR(2) = CHAR(13) + CHAR(10);
+  DECLARE @proc_name SYSNAME = COALESCE(OBJECT_NAME(@@PROCID), 'Insufficient permissions to get stored procedure name.');
+  DECLARE @error INT;
+  DECLARE @rowcount INT;
+  DECLARE @error_message NVARCHAR(MAX);
+
+  DELETE FROM <#= table.SchemaNameAndTableName #>
+    WHERE
+      <#= String.Join(" AND" + Environment.NewLine + "      ", table.Columns.GetWhereClauseColumnList(ColumnType.PrimaryKey)) #>;
+
+  SELECT @error = @@ERROR, @rowcount = @@ROWCOUNT;
+
+  IF (@error <> 0) OR (@rowcount = 0)
+  BEGIN
+    DECLARE @parameter_values NVARCHAR(MAX) =
+      <#= String.Join(" + @crlf + " + Environment.NewLine + "      ",
+            table
+              .Columns
+              .Select(column => String.Format("'{0} = ' + {1}", column.SqlIdentifier, column.SqlExpressionToConvertToString)))  #>;
+
+    IF @error <> 0
+    BEGIN
+      SET @error_message =
+        @proc_name + ': Error ' + CONVERT(NVARCHAR(MAX), @error) + ' occurred when calling DELETE FROM <#= table.SchemaNameAndTableName #>.' + @crlf +
+        'Parameter values:' + @crlf + @parameter_values;
+      RAISERROR(@error_message, 16, 1);
+      RETURN 1;
+    END;
+
+    IF @rowcount = 0
+    BEGIN
+      SET @error_message =
+        @proc_name + ': No row inserted.  DELETE FROM <#= table.SchemaNameAndTableName #> failed.' + @crlf +
+        'Parameter values:' + @crlf + @parameter_values;
+      RAISERROR(@error_message, 16, 1);
+      RETURN 2;
+    END;
+  END;
+
+  SET NOCOUNT OFF;
+
+  RETURN 0;
+END;
+
+GO
+<#+
+
+      this.SaveOutput(Path.Combine(outputDirectory, spName + ".sql"));
+    } // foreach table
+  } // foreach database
+}
+#>
