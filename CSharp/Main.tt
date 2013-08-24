@@ -27,7 +27,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
       TargetLanguage = TargetLanguage.CSharp,
       IsTargetLanguageCaseSensitive = IsTargetLanguageCaseSensitive.Yes
     };
-
+    
   var outputDirectory = Path.GetDirectoryName(this.Host.ResolvePath("."));
   var server = new Server(configuration);
    

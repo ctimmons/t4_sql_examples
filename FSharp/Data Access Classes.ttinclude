@@ -19,8 +19,10 @@ namespace <#= outputFilename #>
   open Utilities.Sql
 <#+
 
-    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+      {
       
 #>
 
@@ -28,20 +30,20 @@ namespace <#= outputFilename #>
     static let _connectionString = ConfigurationManager.ConnectionStrings.["<#= database.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString
 
 <#+
-      var arguments = table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey);
-      if (arguments.Count == 0)
-      {
+        var arguments = table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey);
+        if (arguments.Count == 0)
+        {
 #>
     static member Select<#= table.TargetLanguageTableIdentifier #>() : seq<<#= table.TargetLanguageTableIdentifier #>> =
 <#+
-      }
-      else
-      {
+        }
+        else
+        {
 #>
     static member Select<#= table.TargetLanguageTableIdentifier #>
       <#= String.Join(Environment.NewLine + "      ", arguments) #> : seq<<#= table.TargetLanguageTableIdentifier #>> =
 <#+
-      }
+        }
 #>
       use connection = new SqlConnection(_connectionString)
       connection.Open()
@@ -49,13 +51,13 @@ namespace <#= outputFilename #>
       use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select") #>")
       command.Parameters.Clear()
 <#+
-      var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey);
-      if (parameters.Count > 0)
-      {
+        var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey);
+        if (parameters.Count > 0)
+        {
 #>
       command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", parameters) #>) |> ignore
 <#+
-      }
+        }
 #>
 
       use reader = command.ExecuteReader(CommandBehavior.CloseConnection)
@@ -104,8 +106,9 @@ namespace <#= outputFilename #>
       command.ExecuteNonQuery()
 
 <#+
-      } // if
-    } // foreach table
+        } // if
+      } // foreach table
+    } // foreach schema
 
     this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".fs"));
   } // foreach database

@@ -4,9 +4,11 @@ private void GenerateSelectStoredProcedures(Server server, String outputDirector
 {
   foreach (var database in server.Databases.RelevantDatabases)
   {
-    foreach (var table in database.Tables)
+    foreach (var schema in database.Schemas)
     {
-      var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select");
+      foreach (var table in schema.Tables)
+      {
+        var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select");
 
 #>
 USE [<#= database.Name #>];
@@ -48,6 +50,7 @@ BEGIN
       <#= String.Join(" + @crlf + " + Environment.NewLine + "      ",
             table
               .Columns
+              .Where(column => column.ColumnType.HasFlag(ColumnType.PrimaryKey))
               .Select(column => String.Format("'{0} = ' + {1}", column.SqlIdentifier, column.SqlExpressionToConvertToString)))  #>;
     SET @error_message =
       @proc_name + ': Error ' + CONVERT(NVARCHAR(MAX), @error) + ' occurred when calling SELECT FROM <#= table.SchemaNameAndTableName #>.' + @crlf +
@@ -64,8 +67,9 @@ END;
 GO
 <#+
 
-      this.SaveOutput(Path.Combine(outputDirectory, spName + ".sql"));
-    } // foreach table
+        this.SaveOutput(Path.Combine(outputDirectory, spName + ".sql"));
+      } // foreach table
+    } // foreach schema
   } // foreach database
 }
 

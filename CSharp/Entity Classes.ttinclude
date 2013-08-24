@@ -11,8 +11,10 @@ namespace <#= outputFilename #>
 {
 <#+
 
-    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+      {
 
 #>
   public class <#= table.TargetLanguageTableIdentifier #>
@@ -21,7 +23,8 @@ namespace <#= outputFilename #>
   }
   
 <#+
-    } // foreach table
+      } // foreach table
+    } // foreach schema
 #> 
 }
 

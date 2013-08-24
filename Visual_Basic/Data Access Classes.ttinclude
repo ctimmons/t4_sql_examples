@@ -20,30 +20,32 @@ Imports Utilities.Sql
 Namespace <#= outputFilename #>
 <#+
 
-    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+      {
       
 #>
   Public Class <#= table.TargetLanguageTableIdentifier #>Methods
     Private Shared _connectionString = ConfigurationManager.ConnectionStrings("<#= database.GetTargetLanguageIdentifier(database.Name) #>").ConnectionString
 
 <#+
-      var arguments = table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No);
-      if (arguments.Count == 0)
-      {
+        var arguments = table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No);
+        if (arguments.Count == 0)
+        {
 #>
     Public Shared Function Select<#= table.TargetLanguageTableIdentifier #>() As List(Of <#= table.TargetLanguageTableIdentifier #>)
 <#+
-      }
-      else
-      {
+        }
+        else
+        {
 #>
     Public Shared Function Select<#= table.TargetLanguageTableIdentifier #> _
       (
         <#= String.Join("," + Environment.NewLine + "        ", arguments) #>
       ) As List(Of <#= table.TargetLanguageTableIdentifier #>)
 <#+
-      }
+        }
 #>
       Dim result As New List(Of <#= table.TargetLanguageTableIdentifier #>)()
       
@@ -53,13 +55,13 @@ Namespace <#= outputFilename #>
         Using command As New SqlCommand() With { .Connection = connection, .CommandType = CommandType.StoredProcedure, .CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select") #>" }
           command.Parameters.Clear()
 <#+
-      var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No);
-      if (parameters.Count > 0)
-      {
+        var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No);
+        if (parameters.Count > 0)
+        {
 #>
           command.Parameters.Add(<#= String.Join(")" + Environment.NewLine + "          command.Parameters.Add(", parameters) #>)
 <#+
-      }
+        }
 #>
 
           Using reader = command.ExecuteReader(CommandBehavior.CloseConnection)
@@ -81,9 +83,9 @@ Namespace <#= outputFilename #>
 
 <#+
 
-      /* Views don't need insert, update and delete methods. */
-      if (!table.IsView)
-      {
+        /* Views don't need insert, update and delete methods. */
+        if (!table.IsView)
+        {
       
 #>
     Public Shared Sub Insert<#= table.TargetLanguageTableIdentifier #> _
@@ -132,12 +134,13 @@ Namespace <#= outputFilename #>
     End Sub
   
 <#+
-      } // if
+        } // if
 #> 
   End Class
   
 <#+
-    } // foreach table
+      } // foreach table
+    } // foreach schema
 #> 
 End Namespace
 

@@ -10,8 +10,10 @@ private void GenerateEntityClasses(Server server, String outputDirectory)
 Namespace <#= outputFilename #>
 <#+
 
-    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+      {
 
 #>
   Public Class <#= table.TargetLanguageTableIdentifier #>
@@ -19,7 +21,8 @@ Namespace <#= outputFilename #>
   End Class
 
 <#+
-    } // foreach table
+      } // foreach table
+    } // foreach schema
 #> 
 End Namespace
 

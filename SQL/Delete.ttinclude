@@ -4,9 +4,11 @@ private void GenerateDeleteStoredProcedures(Server server, String outputDirector
 {
   foreach (var database in server.Databases.RelevantDatabases)
   {
-    foreach (var table in database.Tables)
+    foreach (var schema in database.Schemas)
     {
-      var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Delete");
+      foreach (var table in schema.Tables)
+      {
+        var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Delete");
 
 #>
 USE [<#= database.Name #>];
@@ -46,6 +48,7 @@ BEGIN
       <#= String.Join(" + @crlf + " + Environment.NewLine + "      ",
             table
               .Columns
+              .Where(column => column.ColumnType.HasFlag(ColumnType.PrimaryKey))
               .Select(column => String.Format("'{0} = ' + {1}", column.SqlIdentifier, column.SqlExpressionToConvertToString)))  #>;
 
     IF @error <> 0
@@ -75,8 +78,9 @@ END;
 GO
 <#+
 
-      this.SaveOutput(Path.Combine(outputDirectory, spName + ".sql"));
-    } // foreach table
+        this.SaveOutput(Path.Combine(outputDirectory, spName + ".sql"));
+      } // foreach table
+    } // foreach schema
   } // foreach database
 }
 #>

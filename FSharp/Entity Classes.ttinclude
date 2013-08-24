@@ -11,15 +11,18 @@ namespace <#= outputFilename #>
 
 <#+
 
-    foreach (var table in database.Tables.OrderBy(table => table.SchemaName).ThenBy(table => table.Name))
+    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+      {
 
 #>
   type <#= table.TargetLanguageTableIdentifier #>() =
     <#= String.Join(Environment.NewLine + "    ", table.Columns.GetClassPropertyDeclarations("public")) #>
   
 <#+
-    } // foreach table
+      } // foreach table
+    } // foreach schema
 
     this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".fs"));
   } // foreach database
