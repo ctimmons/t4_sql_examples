@@ -64,8 +64,6 @@
     <None Include="Data Access Classes.ttinclude" />
     <None Include="Entity Classes.ttinclude" />
     <None Include="Main.tt" />
-    <Compile Include="adventureworks2012.Entities.fs" />
-    <Compile Include="adventureworks2012.DataLayer.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <PropertyGroup>
