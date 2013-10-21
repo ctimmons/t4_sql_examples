@@ -1,10 +1,10 @@
 ﻿<#+
 
-private void GenerateEntityClasses(Server server, String outputDirectory)
+private void GenerateEntityClasses(IEnumerable<Database> databases, String outputDirectory)
 {
-  foreach (var database in server.Databases.RelevantDatabases.OrderBy(db => db.Name))
+  foreach (var database in databases)
   {
-    var outputFilename = database.GetTargetLanguageIdentifier(database.Name) + ".Entities";
+    var outputFilename = IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".Entities";
 
 #>
 Namespace <#= outputFilename #>

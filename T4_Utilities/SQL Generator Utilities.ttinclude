@@ -5,6 +5,7 @@
       { "AdventureWorks2012", "adv" },
       { "blog", "blog" },
       { "finance", "fin" },
+      { "nhqc", "ae" },
       { "TSQL2012", "tsql" },
       { "Utilities", "util" }
     };

@@ -1,10 +1,10 @@
 ﻿<#+
 
-private void GenerateDataAccessClasses(Server server, String outputDirectory)
+private void GenerateDataAccessClasses(IEnumerable<Database> databases, String outputDirectory)
 {
-  foreach (var database in server.Databases.RelevantDatabases.OrderBy(db => db.Name))
+  foreach (var database in databases)
   {
-    var outputFilename = database.GetTargetLanguageIdentifier(database.Name) + ".DataLayer";
+    var outputFilename = IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".DataLayer";
   
 #>
 namespace <#= outputFilename #>
@@ -14,7 +14,7 @@ namespace <#= outputFilename #>
   open System.Data
   open System.Data.SqlClient
 
-  open <#= database.GetTargetLanguageIdentifier(database.Name) + ".Entities" #>
+  open <#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".Entities" #>
 
   open Utilities.Sql
 <#+
@@ -27,7 +27,7 @@ namespace <#= outputFilename #>
 #>
 
   type <#= table.TargetLanguageTableIdentifier #>Methods() =
-    static let _connectionString = ConfigurationManager.ConnectionStrings.["<#= database.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString
+    static let _connectionString = ConfigurationManager.ConnectionStrings.["<#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString
 
 <#+
         var arguments = table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey);
@@ -48,7 +48,7 @@ namespace <#= outputFilename #>
       use connection = new SqlConnection(_connectionString)
       connection.Open()
 
-      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select") #>")
+      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Select") #>")
       command.Parameters.Clear()
 <#+
         var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey);
@@ -80,19 +80,29 @@ namespace <#= outputFilename #>
       use connection = new SqlConnection(_connectionString)
       connection.Open()
 
-      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Insert") #>")
+      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Insert") #>")
       command.Parameters.Clear()
       command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInInsertStatement)) #>) |> ignore
       command.ExecuteNonQuery()
 
     static member public Update<#= table.TargetLanguageTableIdentifier #>
-      <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInUpdateSetClause)) #> =
+      <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #> =
       use connection = new SqlConnection(_connectionString)
       connection.Open()
 
-      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Update") #>")
+      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Update") #>")
       command.Parameters.Clear()
-      command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInUpdateSetClause)) #>) |> ignore
+      command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>) |> ignore
+      command.ExecuteNonQuery()
+
+    static member public Merge<#= table.TargetLanguageTableIdentifier #>
+      <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #> =
+      use connection = new SqlConnection(_connectionString)
+      connection.Open()
+
+      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Merge") #>")
+      command.Parameters.Clear()
+      command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #>) |> ignore
       command.ExecuteNonQuery()
 
     static member public Delete<#= table.TargetLanguageTableIdentifier #>
@@ -100,7 +110,7 @@ namespace <#= outputFilename #>
       use connection = new SqlConnection(_connectionString)
       connection.Open()
 
-      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Delete") #>")
+      use command = new SqlCommand(Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Delete") #>")
       command.Parameters.Clear()
       command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey)) #>) |> ignore
       command.ExecuteNonQuery()

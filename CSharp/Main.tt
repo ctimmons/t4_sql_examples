@@ -3,12 +3,14 @@
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Data" #>
 <#@ assembly name="System.Xml" #>
+<#@ assembly name="C:\Data\Dev\Visual Studio\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll" #>
 <#@ assembly name="C:\Data\Dev\Visual Studio\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Data" #>
 <#@ import namespace="System.Data.SqlClient" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
+<#@ import namespace="Utilities.Core" #>
 <#@ import namespace="Utilities.Sql" #>
 <#@ include file="..\T4_Utilities\SQL Generator Utilities.ttinclude" #>
 <#@ include file="Entity Classes.ttinclude" #>
@@ -18,36 +20,28 @@
 using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=AdventureWorks2012;Integrated Security=true;"))
 {
   connection.Open();
-   
+
   var configuration =
-    new Utilities.Sql.Configuration()
+    new Utilities.Sql.Configuration() 
     {
       Connection = connection,
-      XmlSystem = XmlSystem.Linq_XDocument,
-      TargetLanguage = TargetLanguage.CSharp,
-      IsTargetLanguageCaseSensitive = IsTargetLanguageCaseSensitive.Yes
+      XmlSystem = XmlSystem.NonLinq_XmlDocument,
+      TargetLanguage = TargetLanguage.CSharp_4_0,
+      IsTargetLanguageCaseSensitive = IsTargetLanguageCaseSensitive.Yes,
+      XmlValidationLocation = XmlValidationLocation.PropertySetter
     };
     
-  var outputDirectory = Path.GetDirectoryName(this.Host.ResolvePath("."));
+  var outputDirectory = Path.Combine(Path.GetDirectoryName(this.Host.ResolvePath(".")), "Output");
   var server = new Server(configuration);
-   
-  /* In these templates, to prevent code generation for a particular database,
-     add its name to the list of ignored database names.
+  var databaseNames = new List<String>() { "AdventureWorks2012" };
+  var databases =
+    server
+    .Databases
+    .Where(db => databaseNames.Contains(db.Name, CaseInsensitiveStringComparer.Instance)) 
+    .OrderBy(db => db.Name);
 
-     Note that the Server.Databases.IgnoredDatabaseNames property only affects
-     what's returned by the Server.Databases.RelevantDatabases property.
-     
-     By default, the IgnoredDatabaseNames includes "master", "model", "msdb",
-     "tempdb", "reportserver", and "reportservertempdb".
-
-     Also note that the IgnoredDatabaseNames and RelevantDatabases properties don't have any
-     effect if your code enumerates the databases directly (e.g. foreach (var db in server.Databases)),
-     or accesses an individual database directly (e.g. server.Databases["utilities"]). */
-  
-  //server.Databases.IgnoredDatabaseNames.Add("AdventureWorks2012");
-
-  this.GenerateEntityClasses(server, outputDirectory);
-  this.GenerateDataAccessClasses(server, outputDirectory);
+  this.GenerateEntityClasses(databases, outputDirectory);
+  this.GenerateDataAccessClasses(databases, outputDirectory);
 }
 
 #>

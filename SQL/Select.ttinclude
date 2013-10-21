@@ -1,14 +1,14 @@
 ﻿<#+
 
-private void GenerateSelectStoredProcedures(Server server, String outputDirectory)
+private void GenerateSelectStoredProcedures(IEnumerable<Database> databases, String outputDirectory)
 {
-  foreach (var database in server.Databases.RelevantDatabases)
+  foreach (var database in databases)
   {
     foreach (var schema in database.Schemas)
     {
       foreach (var table in schema.Tables)
       {
-        var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select");
+        var spName = this.GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Select");
 
 #>
 USE [<#= database.Name #>];

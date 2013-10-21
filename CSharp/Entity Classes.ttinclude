@@ -1,10 +1,10 @@
 ﻿<#+
 
-private void GenerateEntityClasses(Server server, String outputDirectory)
+private void GenerateEntityClasses(IEnumerable<Database> databases, String outputDirectory)
 {
-  foreach (var database in server.Databases.RelevantDatabases.OrderBy(db => db.Name))
+  foreach (var database in databases)
   {
-    var outputFilename = database.GetTargetLanguageIdentifier(database.Name) + ".Entities";
+    var outputFilename = IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".Entities";
 
 #>
 namespace <#= outputFilename #>
@@ -19,7 +19,9 @@ namespace <#= outputFilename #>
 #>
   public class <#= table.TargetLanguageTableIdentifier #>
   {
-    <#= String.Join(" { get; set; }" + Environment.NewLine + "    ", table.Columns.GetClassPropertyDeclarations("public")) #> { get; set; }
+<#= String.Join(Environment.NewLine, table.Columns.GetNecessaryTargetLanguageBackingStoreDeclarations()).Indent(4) #>
+
+<#= String.Join(Environment.NewLine, table.Columns.GetClassPropertyDeclarations("public")).Indent(4) #>
   }
   
 <#+

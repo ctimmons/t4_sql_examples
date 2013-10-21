@@ -1,10 +1,10 @@
 ﻿<#+
 
-private void GenerateDataAccessClasses(Server server, String outputDirectory)
+private void GenerateDataAccessClasses(IEnumerable<Database> databases, String outputDirectory)
 {
-  foreach (var database in server.Databases.RelevantDatabases.OrderBy(db => db.Name))
+  foreach (var database in databases)
   {
-    var outputFilename = database.GetTargetLanguageIdentifier(database.Name) + ".DataLayer";
+    var outputFilename = IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".DataLayer";
   
 #>
 using System;
@@ -13,7 +13,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-using <#= database.GetTargetLanguageIdentifier(database.Name) + ".Entities" #>;
+using <#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".Entities" #>;
 
 using Utilities.Sql;
 
@@ -29,7 +29,7 @@ namespace <#= outputFilename #>
 #>
   public static class <#= table.TargetLanguageTableIdentifier #>Methods
   {
-    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= database.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString;
+    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString;
 
     public static List<<#= table.TargetLanguageTableIdentifier #>> Select<#= table.TargetLanguageTableIdentifier #>
       (
@@ -42,7 +42,7 @@ namespace <#= outputFilename #>
       {
         connection.Open();
 
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Select") #>" })
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Select") #>" })
         {
           command.Parameters.Clear();
 <#+
@@ -90,7 +90,7 @@ namespace <#= outputFilename #>
       {
         connection.Open();
 
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Insert") #>" })
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Insert") #>" })
         {
           command.Parameters.Clear();
           command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInInsertStatement)) #>);
@@ -101,17 +101,35 @@ namespace <#= outputFilename #>
 
     public static void Update<#= table.TargetLanguageTableIdentifier #>
       (
-        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInUpdateSetClause)) #>
+        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>
       )
     {
       using (var connection = new SqlConnection(_connectionString))
       {
         connection.Open();
 
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Update") #>" })
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Update") #>" })
         {
           command.Parameters.Clear();
-          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInUpdateSetClause)) #>);
+          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>);
+          command.ExecuteNonQuery();
+        }
+      }
+    }
+
+    public static void Merge<#= table.TargetLanguageTableIdentifier #>
+      (
+        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #>
+      )
+    {
+      using (var connection = new SqlConnection(_connectionString))
+      {
+        connection.Open();
+
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Merge") #>" })
+        {
+          command.Parameters.Clear();
+          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #>);
           command.ExecuteNonQuery();
         }
       }
@@ -126,7 +144,7 @@ namespace <#= outputFilename #>
       {
         connection.Open();
 
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Delete") #>" })
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Delete") #>" })
         {
           command.Parameters.Clear();
           command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey)) #>);

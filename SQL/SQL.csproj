@@ -43,6 +43,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Main.txt</LastGenOutput>
     </None>
+    <None Include="Merge %28Insert and Update%29.ttinclude" />
     <None Include="Select.ttinclude" />
     <None Include="Update.ttinclude" />
   </ItemGroup>

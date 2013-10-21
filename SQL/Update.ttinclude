@@ -1,14 +1,17 @@
 ﻿<#+
 
-private void GenerateUpdateStoredProcedures(Server server, String outputDirectory)
+private void GenerateUpdateStoredProcedures(IEnumerable<Database> databases, String outputDirectory)
 {
-  foreach (var database in server.Databases.RelevantDatabases)
+  foreach (var database in databases)
   {
     foreach (var schema in database.Schemas)
     {
       foreach (var table in schema.Tables)
       {
-        var spName = this.GetStoredProcedureName(database.Name, table.SchemaName, table.Name, "Update");
+        if (table.IsView)
+          continue;
+
+        var spName = this.GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Update");
 
 #>
 USE [<#= database.Name #>];
@@ -24,7 +27,7 @@ GO
 
 CREATE PROCEDURE <#= spName #>
   (
-    <#= String.Join("," + Environment.NewLine + "    ", table.Columns.GetStoredProcedureParameters(ColumnType.CanAppearInUpdateSetClause)) #>
+    <#= String.Join("," + Environment.NewLine + "    ", table.Columns.GetStoredProcedureParameters(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>
   )
 AS
 BEGIN
@@ -50,7 +53,7 @@ BEGIN
       <#= String.Join(" + @crlf + " + Environment.NewLine + "      ",
             table
               .Columns
-              .Where(column => column.ColumnType.HasFlag(ColumnType.CanAppearInUpdateSetClause))
+              .Where(column => ((ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList) & column.ColumnType) > 0)
               .Select(column => String.Format("'{0} = ' + {1}", column.SqlIdentifier, column.SqlExpressionToConvertToString)))  #>;
 
     IF @error <> 0
