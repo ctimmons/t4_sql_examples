@@ -3,8 +3,8 @@
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Data" #>
 <#@ assembly name="System.Xml" #>
-<#@ assembly name="C:\Data\Dev\Visual Studio\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll" #>
-<#@ assembly name="C:\Data\Dev\Visual Studio\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll" #>
+<#@ assembly name="C:\users\ctimmons\documents\Data\Dev\Visual Studio\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll" #>
+<#@ assembly name="C:\users\ctimmons\documents\Data\Dev\Visual Studio\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Data" #>
 <#@ import namespace="System.Data.SqlClient" #>
@@ -27,7 +27,6 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
       Connection = connection,
       XmlSystem = XmlSystem.NonLinq_XmlDocument,
       TargetLanguage = TargetLanguage.CSharp_4_0,
-      IsTargetLanguageCaseSensitive = IsTargetLanguageCaseSensitive.Yes,
       XmlValidationLocation = XmlValidationLocation.PropertySetter
     };
     
