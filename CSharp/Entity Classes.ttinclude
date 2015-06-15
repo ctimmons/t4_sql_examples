@@ -2,37 +2,77 @@
 
 private void GenerateEntityClasses(IEnumerable<Database> databases, String outputDirectory)
 {
+  var twoNewlines = Environment.NewLine.Repeat(2);
+
   foreach (var database in databases)
   {
-    var outputFilename = IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".Entities";
+    var outputFilename = database.TargetLanguageIdentifier + ".Entities";
 
-#>
-namespace <#= outputFilename #>
-{
-<#+
+    this.WriteLine("namespace {0}", outputFilename);
+    this.WriteLine("{");
 
     foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
+      foreach (var udtt in schema.UserDefinedTableTypes.OrderBy(udtt => udtt.Name))
+        this.WriteLine(this.GetEntityClass(udtt.TargetLanguageIdentifier, udtt.Columns));
+
       foreach (var table in schema.Tables.OrderBy(table => table.Name))
+        this.WriteLine(this.GetEntityClass(table.TargetLanguageIdentifier, table.Columns));
+
+      foreach (var storedProcedure in schema.StoredProcedures.Where(sp => sp.DoesReturnResultSet).OrderBy(sp => sp.Name))
       {
+        foreach (var columns in storedProcedure.ResultSets)
+          this.WriteLine(this.GetEntityClass(storedProcedure.TargetLanguageIdentifier, columns));
 
-#>
-  public class <#= table.TargetLanguageTableIdentifier #>
-  {
-<#= String.Join(Environment.NewLine, table.Columns.GetNecessaryTargetLanguageBackingStoreDeclarations()).Indent(4) #>
-
-<#= String.Join(Environment.NewLine, table.Columns.GetClassPropertyDeclarations("public")).Indent(4) #>
-  }
-  
-<#+
-      } // foreach table
+        if (storedProcedure.ResultSets.Count > 1)
+        {
+          this.WriteLine(@"
+  public class {0}_AllResultSets
+  {{
+{1}
+  }}",
+  storedProcedure.TargetLanguageIdentifier,
+  storedProcedure
+  .ResultSets
+  .OrderBy(cs => cs.SetNumber)
+  .Select(cs => cs.TargetLanguageIdentifier + " " + cs.TargetLanguageIdentifier)
+  .JoinAndIndent("," + Environment.NewLine, 4));
+        }
+      } // foreach storedProcedure
     } // foreach schema
-#> 
-}
 
-<#+
+    this.WriteLine("}");
 
     this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".cs"));
   } // foreach database
+}
+
+private String GetEntityClass(String targetLanguageIdentifier, Columns columns)
+{
+  var backingStores = columns.GetNecessaryTargetLanguageBackingStoreDeclarations();
+  if (backingStores.Any())
+  {
+    return String.Format(@"
+  public partial class {0}
+  {{
+{1}
+{2}
+{3}
+  }}",
+      targetLanguageIdentifier,
+      columns.GetNecessaryTargetLanguageBackingStoreDeclarations().JoinAndIndent(4),
+      Environment.NewLine,
+      columns.GetClassPropertyDeclarations("public").JoinAndIndent(4));
+  }
+  else
+  {
+    return String.Format(@"
+  public partial class {0}
+  {{
+{1}
+  }}",
+      targetLanguageIdentifier,
+      columns.GetClassPropertyDeclarations("public").JoinAndIndent(4));
+  }
 }
 #>

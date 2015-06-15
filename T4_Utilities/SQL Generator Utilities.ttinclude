@@ -1,51 +1,61 @@
 ﻿<#+
 
-  private readonly Dictionary<String, String> _prefixes = new Dictionary<String, String>(StringComparer.CurrentCultureIgnoreCase)
-    {
-      { "AdventureWorks2012", "adv" },
-      { "blog", "blog" },
-      { "finance", "fin" },
-      { "nhqc", "ae" },
-      { "TSQL2012", "tsql" },
-      { "Utilities", "util" }
-    };
-
-  private String GetStoredProcedureName(String database, String schema, String table, String operation)
+private readonly Dictionary<String, String> _prefixes = new Dictionary<String, String>(StringComparer.CurrentCultureIgnoreCase)
   {
-    /* Custom stored procedure naming scheme.
+    { "AdventureWorks2012", "adv" },
+    { "blog", "blog" },
+    { "finance", "fin" },
+    { "nhqc", "ae" },
+    { "TSQL2012", "tsql" },
+    { "Utilities", "util" }
+  };
 
-       The returned value serves as both a name for the stored procedure, and a valid
-       filename for storing the stored procedure text (so it can
-       be saved in source control).
+private String GetStoredProcedureName(String database, String schema, String table, String operation)
+{
+  /* Custom stored procedure naming scheme.
+
+      The returned value serves as both a name for the stored procedure, and a valid
+      filename for storing the stored procedure text (so it can
+      be saved in source control).
     
-         format:
+        format:
 
-           [schema].[prefix_sp_operation_table]
+          [schema].[prefix_sp_operation_table]
          
-         where:
+        where:
 
-            schema = database schema name
-            prefix = three or four letter identifier for a database
-            operation = select, insert, update or delete
-            table = table name 
+          schema = database schema name
+          prefix = three or four letter identifier for a database
+          operation = select, insert, update or delete
+          table = table name 
             
-         examples:
+        examples:
 
-           [dbo].[blog_sp_Select_Pages]
-           [Person].[adv_sp_Insert_EmailAddress]
+          [dbo].[blog_sp_Select_Pages]
+          [Person].[adv_sp_Insert_EmailAddress]
 
-    */
+  */
 
-    var prefix = this._prefixes[database]; // Can throw KeyNotFoundException.
+  var prefix = this._prefixes[database]; // Can throw KeyNotFoundException.
 
-    return String.Format("[{0}].[{1}_sp_{2}_{3}]", schema, prefix, operation, table);
-  }
+  return String.Format("[{0}].[{1}_sp_{2}_{3}]", schema, prefix, operation, table);
+}
 
-  private void SaveOutput(String path)
-  {
-    Directory.CreateDirectory(Path.GetDirectoryName(path));
-    File.WriteAllText(path, this.GenerationEnvironment.ToString());
-    this.GenerationEnvironment.Clear();
-  }
+private static readonly Regex _valueRegex = new Regex(@"(Value\s*=\s*)(.*)\b", RegexOptions.Singleline);
+
+private String FixupSqlParameterValue(SqlParameter sqlParameter)
+{
+  var s = ReflectionUtils.GetObjectInitializer(sqlParameter, "DbType", "SqlValue");
+  return _valueRegex.Replace(s, "$1" + Utilities.Sql.SqlServer.IdentifierHelper.GetTargetLanguageIdentifier(sqlParameter.ParameterName));
+}
+
+private void SaveOutput(String path)
+{
+  /* "this" refers to the T4 TextTransformation instance that's producing the output.
+      See https://msdn.microsoft.com/en-us/library/Microsoft.VisualStudio.TextTemplating.TextTransformation.aspx. */
+  Directory.CreateDirectory(Path.GetDirectoryName(path));
+  File.WriteAllText(path, this.GenerationEnvironment.ToString());
+  this.GenerationEnvironment.Clear();
+}
 
 #>

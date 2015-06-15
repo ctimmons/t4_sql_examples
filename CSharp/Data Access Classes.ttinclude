@@ -4,7 +4,7 @@ private void GenerateDataAccessClasses(IEnumerable<Database> databases, String o
 {
   foreach (var database in databases)
   {
-    var outputFilename = IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".DataLayer";
+    var outputFilename = database.TargetLanguageIdentifier + ".DataLayer";
   
 #>
 using System;
@@ -13,154 +13,63 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-using <#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) + ".Entities" #>;
+using <#= database.TargetLanguageIdentifier + ".Entities" #>;
 
 using Utilities.Sql;
 
 namespace <#= outputFilename #>
 {
 <#+
-
     foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
       foreach (var table in schema.Tables.OrderBy(table => table.Name))
       {
-        
 #>
-  public static class <#= table.TargetLanguageTableIdentifier #>Methods
+  public static class <#= table.TargetLanguageIdentifier #>_Methods
   {
-    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString;
-
-    public static List<<#= table.TargetLanguageTableIdentifier #>> Select<#= table.TargetLanguageTableIdentifier #>
-      (
-        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey)) #>
-      )
-    {
-      var result = new List<<#= table.TargetLanguageTableIdentifier #>>();
-      
-      using (var connection = new SqlConnection(_connectionString))
-      {
-        connection.Open();
-
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Select") #>" })
-        {
-          command.Parameters.Clear();
-<#+
-          var parameters = table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey);
-          if (parameters.Count > 0)
-          {
-#>
-          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", parameters) #>);
-<#+
-          }
-#>
-
-          using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
-          {
-            while (reader.Read())
-            {
-              result.Add(
-                new <#= table.TargetLanguageTableIdentifier #>()
-                {
-                  <#= String.Join("," + Environment.NewLine + "                  ",
-                        table.Columns.OrderBy(column => column.Name)
-                        .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))) #>
-                });
-            }
-          }
-
-          return result;
-        }
-      }
-    }
+    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= database.TargetLanguageIdentifier #>"].ConnectionString;
 
 <#+
+        this.GenerateSelectMethod(database, table);
 
         /* Views don't need insert, update and delete methods. */
         if (!table.IsView)
         {
-      
+          this.GenerateInsertMethod(database, table);
+          this.GenerateUpdateMethod(database, table);
+          this.GenerateMergeMethod(database, table);
+          this.GenerateDeleteMethod(database, table);
+        }
 #>
-    public static void Insert<#= table.TargetLanguageTableIdentifier #>
-      (
-        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInInsertStatement)) #>
-      )
-    {
-      using (var connection = new SqlConnection(_connectionString))
-      {
-        connection.Open();
-
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Insert") #>" })
-        {
-          command.Parameters.Clear();
-          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInInsertStatement)) #>);
-          command.ExecuteNonQuery();
-        }
-      }
-    }
-
-    public static void Update<#= table.TargetLanguageTableIdentifier #>
-      (
-        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>
-      )
-    {
-      using (var connection = new SqlConnection(_connectionString))
-      {
-        connection.Open();
-
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Update") #>" })
-        {
-          command.Parameters.Clear();
-          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>);
-          command.ExecuteNonQuery();
-        }
-      }
-    }
-
-    public static void Merge<#= table.TargetLanguageTableIdentifier #>
-      (
-        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #>
-      )
-    {
-      using (var connection = new SqlConnection(_connectionString))
-      {
-        connection.Open();
-
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Merge") #>" })
-        {
-          command.Parameters.Clear();
-          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #>);
-          command.ExecuteNonQuery();
-        }
-      }
-    }
-
-    public static void Delete<#= table.TargetLanguageTableIdentifier #>
-      (
-        <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey)) #>
-      )
-    {
-      using (var connection = new SqlConnection(_connectionString))
-      {
-        connection.Open();
-
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Delete") #>" })
-        {
-          command.Parameters.Clear();
-          command.Parameters.Add(<#= String.Join(");" + Environment.NewLine + "          command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey)) #>);
-          command.ExecuteNonQuery();
-        }
-      }
-    }
-<#+
-        } // if
-#> 
   }
   
 <#+
       } // foreach table
+
+      if (schema.StoredProcedures.Any())
+      {
+#>
+  public static class <#= schema.Name #>_StoredProcedureMethods
+  {
+    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= database.TargetLanguageIdentifier #>"].ConnectionString;
+
+<#+
+        foreach (var storedProcedure in schema.StoredProcedures.OrderBy(sp => sp.Name))
+        {
+          if (storedProcedure.ResultSets.Count > 1)
+            this.GenerateStoredProcedureMultipleResultSetsMethod(storedProcedure);
+          else if (storedProcedure.ResultSets.Count == 1)
+            this.GenerateStoredProcedureSingleResultSetMethod(storedProcedure);
+          else
+            this.GenerateStoredProcedureNoResultSetMethod(storedProcedure);
+        }
+#>
+  }
+
+<#+
+      } // if (schema.StoredProcedures.Any())
     } // foreach schema
-#> 
+#>
 }
 
 <#+

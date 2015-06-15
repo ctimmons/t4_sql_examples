@@ -1,0 +1,32 @@
+﻿<#+
+private String GetMethodParameters(Table table, ColumnType columnType, Int32 indent)
+{
+  return
+    table
+    .Columns
+    .GetTargetLanguageMethodIdentifiersAndTypes(columnType)
+    .JoinAndIndent("," + Environment.NewLine, indent);
+}
+
+private String GetSqlCommandParameters(Table table, ColumnType columnType, Int32 indent)
+{
+  var parameters = table.Columns.GetTargetLanguageSqlParameterText(columnType);
+  if (parameters.Any())
+    return
+      parameters
+      .Select(p => "command.Parameters.Add(" + p + ");")
+      .JoinAndIndent(indent);
+  else
+    return "";
+}
+
+private String GetSqlCommandReaderAssigments(Table table, Int32 indent)
+{
+  return
+    table
+    .Columns
+    .OrderBy(column => column.Name)
+    .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))
+    .JoinAndIndent("," + Environment.NewLine, indent);
+}
+#>

@@ -10,8 +10,9 @@
 <#@ import namespace="System.Data.SqlClient" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
 <#@ import namespace="Utilities.Core" #>
-<#@ import namespace="Utilities.Sql" #>
+<#@ import namespace="Utilities.Sql.SqlServer" #>
 <#@ include file="..\T4_Utilities\SQL Generator Utilities.ttinclude" #>
 <#@ include file="Entity Classes.ttinclude" #>
 <#@ include file="Data Access Classes.ttinclude" #>
@@ -22,7 +23,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
   connection.Open();
 
   var configuration =
-    new Utilities.Sql.Configuration() 
+    new Configuration() 
     {
       Connection = connection,
       XmlSystem = XmlSystem.Linq_XDocument,
@@ -46,7 +47,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
            So it looks like there's no other choice but to hardcode the
            outputDirectory value. */
 
-  var outputDirectory = @"C:\Data\Dev\Visual Studio\T4\t4_sql_examples\FSharp\Output";
+  var outputDirectory = @"C:\users\ctimmons\documents\Data\Dev\Visual Studio\T4\t4_sql_examples\FSharp\Output";
   var server = new Server(configuration);
   var databaseNames = new List<String>() { "AdventureWorks2012" };
   var databases =

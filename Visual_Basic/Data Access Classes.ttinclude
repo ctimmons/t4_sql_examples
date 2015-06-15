@@ -26,7 +26,7 @@ Namespace <#= outputFilename #>
       {
       
 #>
-  Public Class <#= table.TargetLanguageTableIdentifier #>Methods
+  Public Class <#= table.TargetLanguageIdentifier #>Methods
     Private Shared _connectionString = ConfigurationManager.ConnectionStrings("<#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) #>").ConnectionString
 
 <#+
@@ -34,20 +34,20 @@ Namespace <#= outputFilename #>
         if (arguments.Count == 0)
         {
 #>
-    Public Shared Function Select<#= table.TargetLanguageTableIdentifier #>() As List(Of <#= table.TargetLanguageTableIdentifier #>)
+    Public Shared Function Select<#= table.TargetLanguageIdentifier #>() As List(Of <#= table.TargetLanguageIdentifier #>)
 <#+
         }
         else
         {
 #>
-    Public Shared Function Select<#= table.TargetLanguageTableIdentifier #> _
+    Public Shared Function Select<#= table.TargetLanguageIdentifier #> _
       (
         <#= String.Join("," + Environment.NewLine + "        ", arguments) #>
-      ) As List(Of <#= table.TargetLanguageTableIdentifier #>)
+      ) As List(Of <#= table.TargetLanguageIdentifier #>)
 <#+
         }
 #>
-      Dim result As New List(Of <#= table.TargetLanguageTableIdentifier #>)()
+      Dim result As New List(Of <#= table.TargetLanguageIdentifier #>)()
       
       Using connection As New SqlConnection(_connectionString)
         connection.Open()
@@ -67,7 +67,7 @@ Namespace <#= outputFilename #>
           Using reader = command.ExecuteReader(CommandBehavior.CloseConnection)
             While reader.Read()
               result.Add(
-                New <#= table.TargetLanguageTableIdentifier #>() With
+                New <#= table.TargetLanguageIdentifier #>() With
                 {
                   <#= String.Join("," + Environment.NewLine + "                  ",
                         table.Columns.OrderBy(column => column.Name)
@@ -88,7 +88,7 @@ Namespace <#= outputFilename #>
         {
       
 #>
-    Public Shared Sub Insert<#= table.TargetLanguageTableIdentifier #> _
+    Public Shared Sub Insert<#= table.TargetLanguageIdentifier #> _
       (
         <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInInsertStatement, IncludeKeyIdentificationComment.No)) #>
       )
@@ -103,7 +103,7 @@ Namespace <#= outputFilename #>
       End Using
     End Sub
 
-    Public Shared Sub Update<#= table.TargetLanguageTableIdentifier #> _
+    Public Shared Sub Update<#= table.TargetLanguageIdentifier #> _
       (
         <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause, IncludeKeyIdentificationComment.No)) #>
       )
@@ -118,7 +118,7 @@ Namespace <#= outputFilename #>
       End Using
     End Sub
 
-    Public Shared Sub Merge<#= table.TargetLanguageTableIdentifier #> _
+    Public Shared Sub Merge<#= table.TargetLanguageIdentifier #> _
       (
         <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList, IncludeKeyIdentificationComment.No)) #>
       )
@@ -133,7 +133,7 @@ Namespace <#= outputFilename #>
       End Using
     End Sub
 
-    Public Shared Sub Delete<#= table.TargetLanguageTableIdentifier #> _
+    Public Shared Sub Delete<#= table.TargetLanguageIdentifier #> _
       (
         <#= String.Join("," + Environment.NewLine + "        ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey, IncludeKeyIdentificationComment.No)) #>
       )

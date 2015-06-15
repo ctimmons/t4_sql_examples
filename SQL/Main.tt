@@ -10,8 +10,9 @@
 <#@ import namespace="System.Data.SqlClient" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
 <#@ import namespace="Utilities.Core" #>
-<#@ import namespace="Utilities.Sql" #>
+<#@ import namespace="Utilities.Sql.SqlServer" #>
 <#@ include file="..\T4_Utilities\SQL Generator Utilities.ttinclude" #>
 <#@ include file="Select.ttinclude" #>
 <#@ include file="Insert.ttinclude" #>
@@ -25,7 +26,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
   connection.Open();
 
   var configuration =
-    new Utilities.Sql.Configuration() 
+    new Configuration() 
     {
       Connection = connection,
       XmlSystem = XmlSystem.Linq_XDocument,

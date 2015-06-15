@@ -1,9 +1,9 @@
 t4_sql_examples
 ===============
 
-For a variety of reasons, I don't like [ORMs](http://en.wikipedia.org/wiki/Object-relational_mapping).  In the absence of an ORM, the usual alternative is manually writing hundreds - or even thousands - of lines of boilerplate code to pass data back and forth between the app(s) and the database.  Yuck.
+For a [variety of reasons](http://stackoverflow.com/questions/760834/how-can-i-design-a-java-web-application-without-an-orm-and-without-embedded-sql), I don't like [ORMs](http://en.wikipedia.org/wiki/Object-relational_mapping).  In the absence of an ORM, the usual alternative is manually writing hundreds - or even thousands - of lines of boilerplate code to pass data back and forth between the app(s) and the database.  Yuck.
 
-Fortunately, there is another way.  A code generator can quickly write all of that boilerplate at the touch of a button.  The best part is that you, the programmer, have full access to both the templates and the generated source code, so you can change what gets generated at will.  This is unlike an ORM, which is going to hide what it's doing under the covers, and make it hard - if not impossible - to do anything outside of that particular ORM's model (they're all a little different, and none has truly universal capabilities).
+Fortunately there's an easier way.  A code generator can quickly write all of that boilerplate at the touch of a button.  The best part is that you, the programmer, have full access to both the templates and the generated source code, so you can change what gets generated at will.  This is unlike an ORM, which is going to hide what it's doing under the covers, and make it hard - if not impossible - to do anything outside of that particular ORM's model (they're all a little different, and none has truly universal capabilities).
 
 I'm not aware of any commercial or open source code generators that do this for .Net apps, so I wrote my own.  A .Net library that exposes the metadata for a given MS SQL server is located in the Utilities.Sql project in the [cs_Utilities](https://github.com/ctimmons/cs_utilities) repository.
 
@@ -44,9 +44,9 @@ Basically identical to each other.  The project's Main.tt template generates cod
 
 The Main.tt template and included templates are the same structure as the CSharp and Visual_Basic projects.
 
-However, F# projects in Visual Studio do *not* support T4 templates.  To get around this, the standalone TextTransform.exe template generator needs to be run separately on the Main.tt template.  For the latest version of .Net, this utility is found in "C:\Program Files (x86)\Common Files\microsoft shared\TextTemplating\11.0\".  For previous versions of .Net, it may be under the \10.0\ subfolder.
+However, F# projects in Visual Studio do *not* support T4 templates.  To get around this, the standalone TextTransform.exe template generator needs to be run separately on the Main.tt template.  For the .Net 4.5, this utility is found in "C:\Program Files (x86)\Common Files\microsoft shared\TextTemplating\12.0\".  For previous versions of .Net, TextTransform.exe may be under the \10.0\ or \11.0\ subfolders.
 
-In this project, I've put a call to TextTransform in the project's pre-build step (open the FSharp project's properties and go to the "Build Events" tab).
+In the project's properties page, I've put a call to TextTransform in the project's pre-build step (open the FSharp project's properties and go to the "Build Events" tab).  Just rebuild the project to run the T4 templates.
 
 ### Processing Logic
 
@@ -65,7 +65,7 @@ Generating the Code
 
 First, download and build the [cs_Utilities](https://github.com/ctimmons/cs_utilities) Visual Studio solution from GitHub.
 
-Then make these changes to the projects in this solution to generate the code on your system...
+Then make these changes to the projects in this solution to generate the code on your system:
 
 In the Main.tt file in each project (except for the T4_Utilities project - it doesn't have a Main.tt file):
 

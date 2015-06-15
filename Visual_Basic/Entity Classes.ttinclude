@@ -16,7 +16,7 @@ Namespace <#= outputFilename #>
       {
 
 #>
-  Public Class <#= table.TargetLanguageTableIdentifier #>
+  Public Class <#= table.TargetLanguageIdentifier #>
     <#= String.Join(Environment.NewLine + "    ", table.Columns.GetClassPropertyDeclarations("Public")) #>
   End Class
 

@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.SqlServer.ConnectionInfo, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.SqlServer.Management.Sdk.Sfc, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.SqlServer.Smo, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Microsoft SQL Server\110\SDK\Assemblies\Microsoft.SqlServer.Types.dll</HintPath>
@@ -70,6 +73,15 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Utilities.ttinclude" />
+    <None Include="Data Access - Insert Method.ttinclude" />
+    <None Include="Data Access - Select Method.ttinclude" />
+    <None Include="Data Access - Update Method.ttinclude" />
+    <None Include="Data Access - Merge Method.ttinclude" />
+    <None Include="Data Access - Delete Method.ttinclude" />
+    <None Include="Data Access - Stored Procedure - Multiple Result Sets.ttinclude" />
+    <None Include="Data Access - Stored Procedure - Single Result Set.ttinclude" />
+    <None Include="Data Access - Stored Procedure - No Result Set.ttinclude" />
     <Content Include="Main.txt">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

@@ -1,0 +1,60 @@
+﻿<#+
+private void GenerateStoredProcedureSingleResultSetMethod(StoredProcedure storedProcedure)
+{
+#>
+    public static IEnumerable<<#= storedProcedure.TargetLanguageIdentifier #>> Select<#= storedProcedure.TargetLanguageIdentifier #>
+      (
+        <#= storedProcedure.GetTargetLanguageMethodParameterNameAndTypes().Join("," + Environment.NewLine) #>
+      )
+    {
+      var result = new List<<#= storedProcedure.TargetLanguageIdentifier #>>();
+      
+      using (var connection = new SqlConnection(_connectionString))
+      {
+        connection.Open();
+
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= storedProcedure.SqlIdentifier #>" })
+        {
+          command.Parameters.Clear();
+<#+
+              if (storedProcedure.SqlParameters.Any())
+              {
+                this.WriteLine(
+                  storedProcedure
+                  .SqlParameters
+                  .Select(p => String.Format("command.Parameters.Add({0});", FixupSqlParameterValue(p)))
+                  .JoinAndIndent(10));
+              }
+#>
+
+          using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
+          {
+<#+
+              this.WriteLine(
+                storedProcedure
+                .ResultSets
+                .Select(cs => String.Format(@"
+            while (reader.Read())
+            {{
+              result.Add(
+                new {0}()
+                {{
+{1}
+                }});
+            }}",
+                  storedProcedure.TargetLanguageIdentifier,
+                  cs
+                  .OrderBy(column => column.Name)
+                  .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))
+                  .JoinAndIndent("," + Environment.NewLine, 18)))
+                .First());
+#>
+          }
+
+          return result;
+        }
+      }
+    }
+<#+
+}
+#>

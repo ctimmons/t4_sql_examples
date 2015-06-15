@@ -1,0 +1,24 @@
+﻿<#+
+private void GenerateUpdateMethod(Database database, Table table)
+{
+#>
+    public static void Update<#= table.TargetLanguageIdentifier #>
+      (
+<#= this.GetMethodParameters(table, ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause, 8) #>
+      )
+    {
+      using (var connection = new SqlConnection(_connectionString))
+      {
+        connection.Open();
+
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Update") #>" })
+        {
+          command.Parameters.Clear();
+<#= this.GetSqlCommandParameters(table, ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause, 10) #>
+          command.ExecuteNonQuery();
+        }
+      }
+    }
+<#+
+}
+#>

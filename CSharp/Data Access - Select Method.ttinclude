@@ -1,0 +1,40 @@
+﻿<#+
+private void GenerateSelectMethod(Database database, Table table)
+{
+#>
+    public static List<<#= table.TargetLanguageIdentifier #>> Select<#= table.TargetLanguageIdentifier #>
+      (
+<#= this.GetMethodParameters(table, ColumnType.PrimaryKey, 8) #>
+      )
+    {
+      var result = new List<<#= table.TargetLanguageIdentifier #>>();
+      
+      using (var connection = new SqlConnection(_connectionString))
+      {
+        connection.Open();
+
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= this.GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Select") #>" })
+        {
+          command.Parameters.Clear();
+<#= this.GetSqlCommandParameters(table, ColumnType.PrimaryKey, 10) #>
+
+          using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
+          {
+            while (reader.Read())
+            {
+              result.Add(
+                new <#= table.TargetLanguageIdentifier #>()
+                {
+<#= this.GetSqlCommandReaderAssigments(table, 18) #>
+                });
+            }
+          }
+
+          return result;
+        }
+      }
+    }
+
+<#+
+}
+#>

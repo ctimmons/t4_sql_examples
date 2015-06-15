@@ -10,11 +10,21 @@
 <#@ import namespace="System.Data.SqlClient" #>
 <#@ import namespace="System.IO" #>
 <#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
 <#@ import namespace="Utilities.Core" #>
-<#@ import namespace="Utilities.Sql" #>
+<#@ import namespace="Utilities.Sql.SqlServer" #>
 <#@ include file="..\T4_Utilities\SQL Generator Utilities.ttinclude" #>
+<#@ include file="Utilities.ttinclude" #>
 <#@ include file="Entity Classes.ttinclude" #>
 <#@ include file="Data Access Classes.ttinclude" #>
+<#@ include file="Data Access - Select Method.ttinclude" #>
+<#@ include file="Data Access - Insert Method.ttinclude" #>
+<#@ include file="Data Access - Update Method.ttinclude" #>
+<#@ include file="Data Access - Merge Method.ttinclude" #>
+<#@ include file="Data Access - Delete Method.ttinclude" #>
+<#@ include file="Data Access - Stored Procedure - Multiple Result Sets.ttinclude" #>
+<#@ include file="Data Access - Stored Procedure - Single Result Set.ttinclude" #>
+<#@ include file="Data Access - Stored Procedure - No Result Set.ttinclude" #>
 <#
 
 using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=AdventureWorks2012;Integrated Security=true;"))
@@ -22,7 +32,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
   connection.Open();
 
   var configuration =
-    new Utilities.Sql.Configuration() 
+    new Configuration()
     {
       Connection = connection,
       XmlSystem = XmlSystem.NonLinq_XmlDocument,
@@ -32,13 +42,17 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
     
   var outputDirectory = Path.Combine(Path.GetDirectoryName(this.Host.ResolvePath(".")), "Output");
   var server = new Server(configuration);
-  var databaseNames = new List<String>() { "AdventureWorks2012" };
+  var databaseNames = new List<String>() { "AdventureWorks2012", "finance" };
   var databases =
     server
     .Databases
-    .Where(db => databaseNames.Contains(db.Name, CaseInsensitiveStringComparer.Instance)) 
+    .Where(db => databaseNames.ContainsCI(db.Name))
     .OrderBy(db => db.Name);
+  
+  var adventureWorks2012 = databases.GetByName("AdventureWorks2012");
 
+  adventureWorks2012.AddStoredProcedure("dbo.uspGetManagerEmployees", new SqlParameter() { ParameterName = "@BusinessEntityID", SqlDbType = SqlDbType.Int, Value = -1 });
+ 
   this.GenerateEntityClasses(databases, outputDirectory);
   this.GenerateDataAccessClasses(databases, outputDirectory);
 }

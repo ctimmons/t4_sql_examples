@@ -1,0 +1,63 @@
+﻿<#+
+private void GenerateStoredProcedureMultipleResultSetsMethod(StoredProcedure storedProcedure)
+{
+#>
+    public static <#= storedProcedure.TargetLanguageIdentifier + "_AllResultSets" #> Select<#= storedProcedure.TargetLanguageIdentifier #>
+      (
+        <#= storedProcedure.GetTargetLanguageMethodParameterNameAndTypes().Join("," + Environment.NewLine) #>
+      )
+    {
+      var result = new <#= storedProcedure.TargetLanguageIdentifier + "_AllResultSets" #>();
+      
+      using (var connection = new SqlConnection(_connectionString))
+      {
+        connection.Open();
+
+        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= storedProcedure.SqlIdentifier #>" })
+        {
+          command.Parameters.Clear();
+<#+
+              if (storedProcedure.SqlParameters.Any())
+              {
+                this.WriteLine(
+                  storedProcedure
+                  .SqlParameters
+                  .Select(p => String.Format("command.Parameters.Add({0});", ReflectionUtils.GetObjectInitializer(p, "DbType", "SqlValue")))
+                  .JoinAndIndent(10));
+              }
+#>
+
+          using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
+          {
+<#+
+              var join = @"
+
+                reader.NextResult();";
+
+              this.WriteLine(
+                storedProcedure
+                .ResultSets
+                .Select(cs => String.Format(@"
+                while (reader.Read())
+                {{
+                  result.{0} =
+                    new {0}()
+                    {{
+{1}
+                    }});
+                }}",
+                  storedProcedure.TargetLanguageIdentifier,
+                  cs
+                  .OrderBy(column => column.Name)
+                  .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))))
+                .Join(join));
+#>
+          }
+
+          return result;
+        }
+      }
+    }
+<#+
+}
+#>

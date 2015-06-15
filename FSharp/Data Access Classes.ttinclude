@@ -26,7 +26,7 @@ namespace <#= outputFilename #>
       
 #>
 
-  type <#= table.TargetLanguageTableIdentifier #>Methods() =
+  type <#= table.TargetLanguageIdentifier #>Methods() =
     static let _connectionString = ConfigurationManager.ConnectionStrings.["<#= IdentifierHelper.GetTargetLanguageIdentifier(database.Name) #>"].ConnectionString
 
 <#+
@@ -34,14 +34,14 @@ namespace <#= outputFilename #>
         if (arguments.Count == 0)
         {
 #>
-    static member Select<#= table.TargetLanguageTableIdentifier #>() : seq<<#= table.TargetLanguageTableIdentifier #>> =
+    static member Select<#= table.TargetLanguageIdentifier #>() : seq<<#= table.TargetLanguageIdentifier #>> =
 <#+
         }
         else
         {
 #>
-    static member Select<#= table.TargetLanguageTableIdentifier #>
-      <#= String.Join(Environment.NewLine + "      ", arguments) #> : seq<<#= table.TargetLanguageTableIdentifier #>> =
+    static member Select<#= table.TargetLanguageIdentifier #>
+      <#= String.Join(Environment.NewLine + "      ", arguments) #> : seq<<#= table.TargetLanguageIdentifier #>> =
 <#+
         }
 #>
@@ -63,7 +63,7 @@ namespace <#= outputFilename #>
       use reader = command.ExecuteReader(CommandBehavior.CloseConnection)
       seq { while reader.Read() do
               yield
-                new <#= table.TargetLanguageTableIdentifier #>(
+                new <#= table.TargetLanguageIdentifier #>(
                   <#= String.Join("," + Environment.NewLine + "                  ",
                         table.Columns.OrderBy(column => column.Name)
                         .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))) #>) }
@@ -75,7 +75,7 @@ namespace <#= outputFilename #>
       {
       
 #>
-    static member Insert<#= table.TargetLanguageTableIdentifier #>
+    static member Insert<#= table.TargetLanguageIdentifier #>
       <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.CanAppearInInsertStatement)) #> =
       use connection = new SqlConnection(_connectionString)
       connection.Open()
@@ -85,7 +85,7 @@ namespace <#= outputFilename #>
       command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.CanAppearInInsertStatement)) #>) |> ignore
       command.ExecuteNonQuery()
 
-    static member public Update<#= table.TargetLanguageTableIdentifier #>
+    static member public Update<#= table.TargetLanguageIdentifier #>
       <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #> =
       use connection = new SqlConnection(_connectionString)
       connection.Open()
@@ -95,7 +95,7 @@ namespace <#= outputFilename #>
       command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInUpdateSetClause)) #>) |> ignore
       command.ExecuteNonQuery()
 
-    static member public Merge<#= table.TargetLanguageTableIdentifier #>
+    static member public Merge<#= table.TargetLanguageIdentifier #>
       <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #> =
       use connection = new SqlConnection(_connectionString)
       connection.Open()
@@ -105,7 +105,7 @@ namespace <#= outputFilename #>
       command.Parameters.Add(<#= String.Join(") |> ignore" + Environment.NewLine + "      command.Parameters.Add(", table.Columns.GetTargetLanguageSqlParameterText(ColumnType.PrimaryKey | ColumnType.CanAppearInMergeSelectList)) #>) |> ignore
       command.ExecuteNonQuery()
 
-    static member public Delete<#= table.TargetLanguageTableIdentifier #>
+    static member public Delete<#= table.TargetLanguageIdentifier #>
       <#= String.Join(Environment.NewLine + "      ", table.Columns.GetTargetLanguageMethodIdentifiersAndTypes(ColumnType.PrimaryKey)) #> =
       use connection = new SqlConnection(_connectionString)
       connection.Open()

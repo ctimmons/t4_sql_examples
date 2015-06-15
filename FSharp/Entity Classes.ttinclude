@@ -17,7 +17,7 @@ namespace <#= outputFilename #>
       {
 
 #>
-  type <#= table.TargetLanguageTableIdentifier #>() =
+  type <#= table.TargetLanguageIdentifier #>() =
 <#= String.Join(Environment.NewLine, table.Columns.GetNecessaryTargetLanguageBackingStoreDeclarations()).Indent(4) #>
 
 <#= String.Join(Environment.NewLine, table.Columns.GetClassPropertyDeclarations("public")).Indent(4) #>
