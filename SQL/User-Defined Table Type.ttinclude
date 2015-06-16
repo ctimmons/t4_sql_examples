@@ -25,7 +25,18 @@ private void GenerateTableTypes(IEnumerable<Database> databases, String outputDi
    
    http://sqlblog.com/blogs/aaron_bertrand/archive/2009/10/14/bad-habits-to-kick-using-alias-types.aspx */
 
-IF NOT EXISTS(SELECT * FROM sys.types WHERE is_table_type = 1 AND name = '<#= tableTypeName #>')
+IF NOT EXISTS
+  (
+    SELECT
+        *
+      FROM
+        sys.types AS T
+        INNER JOIN sys.schemas AS S ON S.schema_id = T.schema_id
+      WHERE
+        T.is_table_type = 1
+        AND S.name = '<#= table.Schema.Name #>'
+        AND T.name = '<#= tableTypeName #>'
+  )
 BEGIN
   CREATE TYPE <#= schemaAndTableTypeName #> AS TABLE
   (

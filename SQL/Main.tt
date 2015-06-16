@@ -45,11 +45,11 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
     .Where(db => databaseNames.Contains(db.Name, CaseInsensitiveStringComparer.Instance)) 
     .OrderBy(db => db.Name);
 
-  /*this.GenerateSelectStoredProcedures(databases, outputDirectory);
+  this.GenerateSelectStoredProcedures(databases, outputDirectory);
   this.GenerateInsertStoredProcedures(databases, outputDirectory); 
   this.GenerateUpdateStoredProcedures(databases, outputDirectory);
   this.GenerateDeleteStoredProcedures(databases, outputDirectory);
-  this.GenerateMergeInsertAndUpdateStoredProcedures(databases, outputDirectory);*/
+  this.GenerateMergeInsertAndUpdateStoredProcedures(databases, outputDirectory);
   this.GenerateTableTypes(databases, outputDirectory);
 }
 
