@@ -1,0 +1,44 @@
+﻿<#+
+
+private void GenerateTableTypes(IEnumerable<Database> databases, String outputDirectory)
+{
+  foreach (var database in databases)
+  {
+    foreach (var schema in database.Schemas)
+    {
+      foreach (var table in schema.Tables)
+      {
+        var tableTypeName = table.Name + "_tabletype";
+        var schemaAndTableTypeName = table.Schema.Name + "." + tableTypeName;
+
+#>
+/* Types are impossible to remove without removing all of
+   the type's dependencies first (e.g. stored procedures,
+   columns, indexes, etc.)  This is difficult to 
+   do programmatically, so this code is simplified to
+   only check for the type's existence before trying to
+   create it.
+   
+   Note that there is no ALTER TYPE statement in SQL Server.
+   If the type needs to be modified, you must go through the
+   multi-step procedure outlined in this blog entry:
+   
+   http://sqlblog.com/blogs/aaron_bertrand/archive/2009/10/14/bad-habits-to-kick-using-alias-types.aspx */
+
+IF NOT EXISTS(SELECT * FROM sys.types WHERE is_table_type = 1 AND name = '<#= tableTypeName #>')
+BEGIN
+  CREATE TYPE <#= schemaAndTableTypeName #> AS TABLE
+  (
+<#= table.Columns.GetCreateTableColumnDeclarations().Join("," + Environment.NewLine).Indent(4) #>
+  );
+END;
+GO
+<#+
+
+        this.SaveOutput(Path.Combine(outputDirectory, schemaAndTableTypeName + ".sql"));
+      } // foreach table
+    } // foreach schema
+  } // foreach database
+}
+
+#>

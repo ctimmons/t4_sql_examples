@@ -58,6 +58,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Main.tt</DependentUpon>
     </Content>
+    <None Include="User-Defined Table Type.ttinclude" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Stored Procedures\" />

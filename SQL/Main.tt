@@ -19,6 +19,7 @@
 <#@ include file="Update.ttinclude" #>
 <#@ include file="Delete.ttinclude" #>
 <#@ include file="Merge (Insert and Update).ttinclude" #>
+<#@ include file="User-Defined Table Type.ttinclude" #>
 <#
 
 using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=AdventureWorks2012;Integrated Security=true;"))
@@ -26,7 +27,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
   connection.Open();
 
   var configuration =
-    new Configuration() 
+    new Configuration()
     {
       Connection = connection,
       XmlSystem = XmlSystem.Linq_XDocument,
@@ -44,11 +45,12 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
     .Where(db => databaseNames.Contains(db.Name, CaseInsensitiveStringComparer.Instance)) 
     .OrderBy(db => db.Name);
 
-  this.GenerateSelectStoredProcedures(databases, outputDirectory);
+  /*this.GenerateSelectStoredProcedures(databases, outputDirectory);
   this.GenerateInsertStoredProcedures(databases, outputDirectory); 
   this.GenerateUpdateStoredProcedures(databases, outputDirectory);
   this.GenerateDeleteStoredProcedures(databases, outputDirectory);
-  this.GenerateMergeInsertAndUpdateStoredProcedures(databases, outputDirectory);
+  this.GenerateMergeInsertAndUpdateStoredProcedures(databases, outputDirectory);*/
+  this.GenerateTableTypes(databases, outputDirectory);
 }
 
 #>
