@@ -13,8 +13,8 @@ private void GenerateEntityClasses(IEnumerable<Database> databases, String outpu
 
     foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
-      foreach (var udtt in schema.UserDefinedTableTypes.OrderBy(udtt => udtt.Name))
-        this.WriteLine(this.GetEntityClass(udtt.TargetLanguageIdentifier, udtt.Columns));
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+        this.WriteLine(this.GetEntityClass(table.TargetLanguageIdentifier + "_tabletype", table.Columns));
 
       foreach (var table in schema.Tables.OrderBy(table => table.Name))
         this.WriteLine(this.GetEntityClass(table.TargetLanguageIdentifier, table.Columns));
