@@ -36,7 +36,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
     {
       Connection = connection,
       XmlSystem = XmlSystem.NonLinq_XmlDocument,
-      TargetLanguage = TargetLanguage.CSharp_4_0,
+      TargetLanguage = TargetLanguage.CSharp_Latest,
       XmlValidationLocation = XmlValidationLocation.PropertySetter
     };
     
