@@ -50,7 +50,7 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
     .OrderBy(db => db.Name);
   
   var adventureWorks2012 = databases.GetByName("AdventureWorks2012");
-
+  
   adventureWorks2012.AddStoredProcedure("dbo.uspGetManagerEmployees", new SqlParameter() { ParameterName = "@BusinessEntityID", SqlDbType = SqlDbType.Int, Value = -1 });
  
   this.GenerateEntityClasses(databases, outputDirectory);

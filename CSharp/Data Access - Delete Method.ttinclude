@@ -1,24 +1,29 @@
 ﻿<#+
-private void GenerateDeleteMethod(Database database, Table table)
+private void WriteDeleteMethod(Database database, Table table)
 {
 #>
-    public static void Delete<#= table.TargetLanguageIdentifier #>
-      (
-<#= this.GetMethodParameters(table, ColumnType.PrimaryKey, 8) #>
-      )
-    {
-      using (var connection = new SqlConnection(_connectionString))
-      {
-        connection.Open();
+public static void Delete<#= table.TargetLanguageIdentifier #>
+  (
+<#+
+  this.PushWritePop(_standardIndent.Repeat(2), this.GetMethodParameters(table, ColumnType.PrimaryKey));
+#>
+  )
+{
+  using (var connection = new SqlConnection(_connectionString))
+  {
+    connection.Open();
 
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Delete") #>" })
-        {
-          command.Parameters.Clear();
-<#= this.GetSqlCommandParameters(table, ColumnType.PrimaryKey, 10) #>
-          command.ExecuteNonQuery();
-        }
-      }
+    using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= GetStoredProcedureName(database.Name, table.Schema.Name, table.Name, "Delete") #>" })
+    {
+      command.Parameters.Clear();
+<#+
+  this.PushWritePop(_standardIndent.Repeat(3), this.GetSqlCommandParameters(table, ColumnType.PrimaryKey));
+#>
+      command.ExecuteNonQuery();
     }
+  }
+}
+
 <#+
 }
 #>

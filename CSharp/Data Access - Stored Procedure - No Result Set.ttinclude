@@ -1,5 +1,5 @@
 ﻿<#+
-private void GenerateStoredProcedureNoResultSetMethod(StoredProcedure storedProcedure)
+private void WriteStoredProcedureNoResultSetMethod(StoredProcedure storedProcedure)
 {
 #>
 <#+

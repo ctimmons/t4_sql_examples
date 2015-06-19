@@ -1,32 +1,47 @@
 ﻿<#+
-private String GetMethodParameters(Table table, ColumnType columnType, Int32 indent)
+
+private static String _standardIndent = " ".Repeat(2);
+
+private String GetMethodParameters(Table table, ColumnType columnType)
 {
   return
     table
     .Columns
     .GetTargetLanguageMethodIdentifiersAndTypes(columnType)
-    .JoinAndIndent("," + Environment.NewLine, indent);
+    .Join("," + Environment.NewLine);
 }
 
-private String GetSqlCommandParameters(Table table, ColumnType columnType, Int32 indent)
+private String GetSqlCommandParameters(Table table, ColumnType columnType)
 {
   var parameters = table.Columns.GetTargetLanguageSqlParameterText(columnType);
   if (parameters.Any())
     return
       parameters
       .Select(p => "command.Parameters.Add(" + p + ");")
-      .JoinAndIndent(indent);
+      .Join();
   else
     return "";
 }
 
-private String GetSqlCommandReaderAssigments(Table table, Int32 indent)
+private String GetSqlCommandReaderAssigments(Columns columns)
 {
   return
-    table
-    .Columns
+    columns
     .OrderBy(column => column.Name)
     .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))
-    .JoinAndIndent("," + Environment.NewLine, indent);
+    .Join("," + Environment.NewLine);
 }
+
+private void WriteClosingBrace()
+{
+  this.WriteLine("}");
+}
+
+private void PushWritePop(String indent, String data)
+{
+  this.PushIndent(indent);
+  this.WriteLine(data);
+  this.PopIndent();
+}
+
 #>

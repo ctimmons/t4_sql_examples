@@ -1,60 +1,53 @@
 ﻿<#+
-private void GenerateStoredProcedureSingleResultSetMethod(StoredProcedure storedProcedure)
+private void WriteStoredProcedureSingleResultSetMethod(StoredProcedure storedProcedure)
 {
 #>
-    public static IEnumerable<<#= storedProcedure.TargetLanguageIdentifier #>> Select<#= storedProcedure.TargetLanguageIdentifier #>
-      (
-        <#= storedProcedure.GetTargetLanguageMethodParameterNameAndTypes().Join("," + Environment.NewLine) #>
-      )
-    {
-      var result = new List<<#= storedProcedure.TargetLanguageIdentifier #>>();
+public static IEnumerable<<#= storedProcedure.TargetLanguageIdentifier #>> Select<#= storedProcedure.TargetLanguageIdentifier #>
+  (
+<#+
+  this.PushWritePop(_standardIndent.Repeat(2), storedProcedure.GetTargetLanguageMethodParameterNameAndTypes().Join("," + Environment.NewLine));
+#>
+  )
+{
+  var result = new List<<#= storedProcedure.TargetLanguageIdentifier #>>();
       
-      using (var connection = new SqlConnection(_connectionString))
+  using (var connection = new SqlConnection(_connectionString))
+  {
+    connection.Open();
+
+    using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= storedProcedure.SqlIdentifier #>" })
+    {
+      command.Parameters.Clear();
+<#+
+  if (storedProcedure.SqlParameters.Any())
+  {
+    this.PushWritePop(_standardIndent.Repeat(3),
+      storedProcedure
+      .SqlParameters
+      .Select(p => String.Format("command.Parameters.Add({0});", FixupSqlParameterValue(p)))
+      .Join());
+  }
+#>
+
+      using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
       {
-        connection.Open();
-
-        using (var command = new SqlCommand() { Connection = connection, CommandType = CommandType.StoredProcedure, CommandText = "<#= storedProcedure.SqlIdentifier #>" })
+        while (reader.Read())
         {
-          command.Parameters.Clear();
+          result.Add(
+            new <#= storedProcedure.TargetLanguageIdentifier #>()
+            {
 <#+
-              if (storedProcedure.SqlParameters.Any())
-              {
-                this.WriteLine(
-                  storedProcedure
-                  .SqlParameters
-                  .Select(p => String.Format("command.Parameters.Add({0});", FixupSqlParameterValue(p)))
-                  .JoinAndIndent(10));
-              }
+  this.PushWritePop(_standardIndent.Repeat(7), this.GetSqlCommandReaderAssigments(storedProcedure.ResultSets.First()));
 #>
-
-          using (var reader = command.ExecuteReader(CommandBehavior.CloseConnection))
-          {
-<#+
-              this.WriteLine(
-                storedProcedure
-                .ResultSets
-                .Select(cs => String.Format(@"
-            while (reader.Read())
-            {{
-              result.Add(
-                new {0}()
-                {{
-{1}
-                }});
-            }}",
-                  storedProcedure.TargetLanguageIdentifier,
-                  cs
-                  .OrderBy(column => column.Name)
-                  .Select(column => String.Format("{0} = {1}", column.TargetLanguageIdentifier, column.GetTargetLanguageDataReaderExpression("reader")))
-                  .JoinAndIndent("," + Environment.NewLine, 18)))
-                .First());
-#>
-          }
-
-          return result;
+            });
         }
       }
+
+      return result;
     }
+  }
+}
+
 <#+
 }
 #>

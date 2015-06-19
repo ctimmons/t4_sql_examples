@@ -6,6 +6,61 @@ private void GenerateDataAccessClasses(IEnumerable<Database> databases, String o
   {
     var outputFilename = database.TargetLanguageIdentifier + ".DataLayer";
   
+    this.WriteDataAccessNamespaceHeader(database.TargetLanguageIdentifier + ".Entities", outputFilename);
+    this.PushIndent(_standardIndent);
+
+    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
+    {
+      foreach (var table in schema.Tables.OrderBy(table => table.Name))
+      {
+        this.WriteDataAccessClassHeader(table.TargetLanguageIdentifier + "_Methods", database.TargetLanguageIdentifier);
+        this.PushIndent(_standardIndent);
+
+        this.WriteSelectMethod(database, table);
+
+        /* Views don't need insert, update and delete methods. */
+        if (!table.IsView)
+        {
+          this.WriteInsertMethod(database, table);
+          this.WriteUpdateMethod(database, table);
+          this.WriteMergeMethod(database, table);
+          this.WriteDeleteMethod(database, table);
+        }
+
+        this.PopIndent();
+        this.WriteClosingBrace();
+      } // foreach table
+
+      if (schema.StoredProcedures.Any())
+      {
+        this.WriteDataAccessClassHeader(schema.Name + "_StoredProcedureMethods", database.TargetLanguageIdentifier);
+        this.PushIndent(_standardIndent);
+
+        foreach (var storedProcedure in schema.StoredProcedures.OrderBy(sp => sp.Name))
+        {
+          if (storedProcedure.ResultSets.Count > 1)
+            this.WriteStoredProcedureMultipleResultSetsMethod(storedProcedure);
+          else if (storedProcedure.ResultSets.Count == 1)
+            this.WriteStoredProcedureSingleResultSetMethod(storedProcedure);
+          else
+            this.WriteStoredProcedureNoResultSetMethod(storedProcedure);
+        }
+
+        this.PopIndent();
+        this.WriteClosingBrace();
+        this.WriteLine("");
+      } // if (schema.StoredProcedures.Any())
+    } // foreach schema
+
+    this.PopIndent();
+    this.WriteClosingBrace();
+
+    this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".cs"));
+  } // foreach database
+}
+
+private void WriteDataAccessNamespaceHeader(String entitiesUsingIdentifier, String namespaceIdentifier)
+{
 #>
 using System;
 using System.Collections.Generic;
@@ -13,68 +68,23 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-using <#= database.TargetLanguageIdentifier + ".Entities" #>;
+using <#= entitiesUsingIdentifier #>;
 
 using Utilities.Sql;
 
-namespace <#= outputFilename #>
+namespace <#= namespaceIdentifier #>
 {
 <#+
-    foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
-    {
-      foreach (var table in schema.Tables.OrderBy(table => table.Name))
-      {
-#>
-  public static class <#= table.TargetLanguageIdentifier #>_Methods
-  {
-    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= database.TargetLanguageIdentifier #>"].ConnectionString;
-
-<#+
-        this.GenerateSelectMethod(database, table);
-
-        /* Views don't need insert, update and delete methods. */
-        if (!table.IsView)
-        {
-          this.GenerateInsertMethod(database, table);
-          this.GenerateUpdateMethod(database, table);
-          this.GenerateMergeMethod(database, table);
-          this.GenerateDeleteMethod(database, table);
-        }
-#>
-  }
-  
-<#+
-      } // foreach table
-
-      if (schema.StoredProcedures.Any())
-      {
-#>
-  public static class <#= schema.Name #>_StoredProcedureMethods
-  {
-    private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= database.TargetLanguageIdentifier #>"].ConnectionString;
-
-<#+
-        foreach (var storedProcedure in schema.StoredProcedures.OrderBy(sp => sp.Name))
-        {
-          if (storedProcedure.ResultSets.Count > 1)
-            this.GenerateStoredProcedureMultipleResultSetsMethod(storedProcedure);
-          else if (storedProcedure.ResultSets.Count == 1)
-            this.GenerateStoredProcedureSingleResultSetMethod(storedProcedure);
-          else
-            this.GenerateStoredProcedureNoResultSetMethod(storedProcedure);
-        }
-#>
-  }
-
-<#+
-      } // if (schema.StoredProcedures.Any())
-    } // foreach schema
-#>
 }
 
-<#+
+private void WriteDataAccessClassHeader(String className, String connectionStringIdentifier)
+{
+#>
+public static class <#= className #>
+{
+  private static String _connectionString = ConfigurationManager.ConnectionStrings["<#= connectionStringIdentifier #>"].ConnectionString;
 
-    this.SaveOutput(Path.Combine(outputDirectory, outputFilename + ".cs"));
-  } // foreach database
+<#+
 }
+
 #>

@@ -2,15 +2,12 @@
 
 private void GenerateEntityClasses(IEnumerable<Database> databases, String outputDirectory)
 {
-  var twoNewlines = Environment.NewLine.Repeat(2);
-  var standardIndent = " ".Repeat(2);
-
   foreach (var database in databases)
   {
     var outputFilename = database.TargetLanguageIdentifier + ".Entities";
 
-    this.WriteNamespaceHeader(outputFilename);
-    this.PushIndent(standardIndent);
+    this.WriteEntityNamespaceHeader(outputFilename);
+    this.PushIndent(_standardIndent);
 
     foreach (var schema in database.Schemas.OrderBy(schema => schema.Name))
     {
@@ -20,8 +17,8 @@ private void GenerateEntityClasses(IEnumerable<Database> databases, String outpu
       // Assume the udtt's don't exist yet, so generate them using table columns.
       foreach (var table in tables)
       {
-        this.WriteClassHeader(table.TargetLanguageIdentifier + "_tabletype");
-        this.PushIndent(standardIndent);
+        this.WriteEntityClassHeader(table.TargetLanguageIdentifier + "_tabletype");
+        this.PushIndent(_standardIndent);
         this.WriteLine(
           table
           .Columns
@@ -36,8 +33,8 @@ private void GenerateEntityClasses(IEnumerable<Database> databases, String outpu
       // use the above udtt's to write multiple class instances to the database.
       foreach (var table in tables)
       {
-        this.WriteClassHeader(table.TargetLanguageIdentifier);
-        this.PushIndent(standardIndent);
+        this.WriteEntityClassHeader(table.TargetLanguageIdentifier);
+        this.PushIndent(_standardIndent);
         this.WriteClassPropertiesWithBackingStores(table.Columns);
         if (!table.IsView)
         {
@@ -55,8 +52,8 @@ private void GenerateEntityClasses(IEnumerable<Database> databases, String outpu
       {
         foreach (var columns in storedProcedure.ResultSets)
         {
-          this.WriteClassHeader(storedProcedure.TargetLanguageIdentifier);
-          this.PushIndent(standardIndent);
+          this.WriteEntityClassHeader(storedProcedure.TargetLanguageIdentifier);
+          this.PushIndent(_standardIndent);
           this.WriteClassPropertiesWithBackingStores(columns);
           this.PopIndent();
           this.WriteClosingBrace();
@@ -65,8 +62,8 @@ private void GenerateEntityClasses(IEnumerable<Database> databases, String outpu
 
         if (storedProcedure.ResultSets.Count > 1)
         {
-          this.WriteClassHeader(storedProcedure.TargetLanguageIdentifier + "_AllResultSets");
-          this.PushIndent(standardIndent);
+          this.WriteEntityClassHeader(storedProcedure.TargetLanguageIdentifier + "_AllResultSets");
+          this.PushIndent(_standardIndent);
           this.WriteLine(
             storedProcedure
             .ResultSets
@@ -87,7 +84,7 @@ private void GenerateEntityClasses(IEnumerable<Database> databases, String outpu
   } // foreach database
 }
 
-private void WriteNamespaceHeader(String outputFilename)
+private void WriteEntityNamespaceHeader(String outputFilename)
 {
 #>
 namespace <#= outputFilename #>
@@ -95,17 +92,12 @@ namespace <#= outputFilename #>
 <#+
 }
 
-private void WriteClassHeader(String className)
+private void WriteEntityClassHeader(String className)
 {
 #>
 public partial class <#= className #>
 {
 <#+
-}
-
-private void WriteClosingBrace()
-{
-  this.WriteLine("}");
 }
 
 private void WriteClassPropertiesWithBackingStores(Columns columns)
@@ -133,7 +125,7 @@ private static DataTable GetDataTable(IEnumerable<<#= className #>> xs)
   var result = new DataTable();
 
 <#+
-  this.PushIndent("  ");
+  this.PushIndent(_standardIndent);
   this.WriteLine(columnDefinitions);
   this.PopIndent();
 #>
@@ -159,7 +151,7 @@ private static void AddDataRow(DataTable dataTable, <#= className #> x)
   var dataRow = dataTable.NewRow();
 
 <#+
-  this.PushIndent("  ");
+  this.PushIndent(_standardIndent);
   this.WriteLine(columnDefinitions);
   this.PopIndent();
 #>
