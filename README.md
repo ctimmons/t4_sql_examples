@@ -44,7 +44,7 @@ Basically identical to each other.  The project's Main.tt template generates cod
 
 The Main.tt template and included templates are the same structure as the CSharp and Visual_Basic projects.
 
-However, F# projects in Visual Studio do *not* support T4 templates.  To get around this, the standalone TextTransform.exe template generator needs to be run separately on the Main.tt template.  For the .Net 4.5, this utility is found in "C:\Program Files (x86)\Common Files\microsoft shared\TextTemplating\12.0\".  For previous versions of .Net, TextTransform.exe may be under the \10.0\ or \11.0\ subfolders.
+However, F# projects in Visual Studio do *not* support T4 templates.  To get around this, the standalone TextTransform.exe template generator needs to be run separately on the Main.tt template.  For .Net 4.5, this utility is found in "C:\Program Files (x86)\Common Files\microsoft shared\TextTemplating\12.0\".  For previous versions of .Net, TextTransform.exe may be under the \10.0\ or \11.0\ subfolders.
 
 In the project's properties page, I've put a call to TextTransform in the project's pre-build step (open the FSharp project's properties and go to the "Build Events" tab).  Just rebuild the project to run the T4 templates.
 
