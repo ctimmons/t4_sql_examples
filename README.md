@@ -1,6 +1,8 @@
 t4_sql_examples
 ===============
 
+(NOTE: This respository is archived.  The latest versions of C# have robust string interpolation capabilities, which makes T4 templates mostly obsolete.  Looked at another way, it's now easier to write a C# app that generates code than it is to write the same functionality in a set of T4 templates.)
+
 For a [variety of reasons](http://stackoverflow.com/questions/760834/how-can-i-design-a-java-web-application-without-an-orm-and-without-embedded-sql), I don't like [ORMs](http://en.wikipedia.org/wiki/Object-relational_mapping).  In the absence of an ORM, the usual alternative is manually writing hundreds - or even thousands - of lines of boilerplate code to pass data back and forth between the app(s) and the database.  Yuck.
 
 Fortunately there's an easier way.  A code generator can quickly write all of that boilerplate at the touch of a button.  The best part is that you, the programmer, have full access to both the templates and the generated source code, so you can change what gets generated at will.  This is unlike an ORM, which is going to hide what it's doing under the covers, and make it hard - if not impossible - to do anything outside of that particular ORM's model (they're all a little different, and none has truly universal capabilities).

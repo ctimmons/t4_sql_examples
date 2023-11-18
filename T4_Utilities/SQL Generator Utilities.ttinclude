@@ -5,6 +5,7 @@ private readonly Dictionary<String, String> _prefixes = new Dictionary<String, S
     { "AdventureWorks2012", "adv" },
     { "blog", "blog" },
     { "finance", "fin" },
+    { "mvc_custom_controls", "mvc" },
     { "nhqc", "ae" },
     { "TSQL2012", "tsql" },
     { "Utilities", "util" }

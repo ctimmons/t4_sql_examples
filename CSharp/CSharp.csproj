@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CSharp</RootNamespace>
     <AssemblyName>CSharp</AssemblyName>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -50,10 +50,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Utilities.Core">
-      <HintPath>..\..\..\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll</HintPath>
+      <HintPath>..\..\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll</HintPath>
     </Reference>
     <Reference Include="Utilities.Sql">
-      <HintPath>..\..\..\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll</HintPath>
+      <HintPath>..\..\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

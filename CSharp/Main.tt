@@ -3,8 +3,8 @@
 <#@ assembly name="System.Core" #>
 <#@ assembly name="System.Data" #>
 <#@ assembly name="System.Xml" #>
-<#@ assembly name="C:\users\ctimmons\documents\Data\Dev\Visual Studio\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll" #>
-<#@ assembly name="C:\users\ctimmons\documents\Data\Dev\Visual Studio\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll" #>
+<#@ assembly name="C:\users\ctimmons\documents\Data\Dev\Visual Studio\CSharp\cs_utilities\Utilities.Core\bin\Debug\Utilities.Core.dll" #>
+<#@ assembly name="C:\users\ctimmons\documents\Data\Dev\Visual Studio\CSharp\cs_utilities\Utilities.Sql\bin\Debug\Utilities.Sql.dll" #>
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Data" #>
 <#@ import namespace="System.Data.SqlClient" #>
@@ -27,7 +27,7 @@
 <#@ include file="Data Access - Stored Procedure - No Result Set.ttinclude" #>
 <#
 
-using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=AdventureWorks2012;Integrated Security=true;"))
+using (var connection = new SqlConnection("Data Source=(local);Initial Catalog=mvc_custom_controls;Integrated Security=true;"))
 {
   connection.Open();
 
@@ -42,16 +42,16 @@ using (var connection = new SqlConnection("Data Source=laptop2;Initial Catalog=A
     
   var outputDirectory = Path.Combine(Path.GetDirectoryName(this.Host.ResolvePath(".")), "Output");
   var server = new Server(configuration);
-  var databaseNames = new List<String>() { "AdventureWorks2012", "finance" };
+  var databaseNames = new List<String>() { "mvc_custom_controls" };
   var databases =
     server
     .Databases
     .Where(db => databaseNames.ContainsCI(db.Name))
     .OrderBy(db => db.Name);
   
-  var adventureWorks2012 = databases.GetByName("AdventureWorks2012");
+  //var adventureWorks2012 = databases.GetByName("AdventureWorks2012");
   
-  adventureWorks2012.AddStoredProcedure("dbo.uspGetManagerEmployees", new SqlParameter() { ParameterName = "@BusinessEntityID", SqlDbType = SqlDbType.Int, Value = -1 });
+  //adventureWorks2012.AddStoredProcedure("dbo.uspGetManagerEmployees", new SqlParameter() { ParameterName = "@BusinessEntityID", SqlDbType = SqlDbType.Int, Value = -1 });
  
   this.GenerateEntityClasses(databases, outputDirectory);
   this.GenerateDataAccessClasses(databases, outputDirectory);
